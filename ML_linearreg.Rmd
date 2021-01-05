@@ -1,7 +1,7 @@
 ---
 title: "ML_Linear Regression Project"
 author: "Haoshu"
-date: "12/16/2020"
+date: "1/5/2021"
 output: html_document
 ---
 
@@ -99,26 +99,82 @@ plot5 + geom_point(aes(color= temp, alpha = 0.6), position =position_jitter(w=1,
 
 ```
 
-## BUILD LINEAR REGRESSION MODEL
+## TRAIN AND TEST DATA 
+```{r}
+library(caTools)
+
+set.seed(101)
+
+sample<-sample.split(bikeshare$count, SplitRatio = 0.7)
+
+train = subset (bikeshare, sample == TRUE)
+test  = subset (bikeshare, sample == FALSE)
+
+
+
+```
+
+
+
+
+## BUILD LINEAR REGRESSION Training MODEL 
 ```{r}
 # predict count based sorely on the temp feature 
-temp.model<-lm(formula = count ~ temp, data = bikeshare)
+train.model<-lm(formula = count ~ factor(season) + workingday + holiday + hour + temp + casual, data = train)
 
-summary(temp.model)
-
-temp.test <- data.frame(temp =c(25))
-predict(temp.model, temp.test)
+summary(train.model)
 
 ```
 
-##BUILD ANOTHER LINEAR REGRESSION MODEL
+## VISUALIZE THE MODEL
 ```{R}
-bikeshare$hour<- sapply(bikeshare$hour, as.numeric)
-model1 <- lm(count ~ . -casual -registered -DateTime -atemp, bikeshare)
-summary(model1)
-
+res<-residuals(train.model)
+res<- as.data.frame(res)
 
 
 ```
+
+
+##GGPLOT
+```{r}
+ggplot(res, aes(res) )+ geom_histogram(fill = 'blue', alpha=0.5)
+
+plot(train.model)
+```
+
+##PREDICTIONS
+```{r}
+test.predictions<- predict(train.model, test)
+
+
+```
+
+
+
+##MSE
+```{r}
+results<-cbind(test.predictions, test$count)
+colnames(results)<-c('pred', 'real')
+results<- as.data.frame(results)
+
+#calcuate MSE
+mse <-mean((results$real-results$pred)^2)
+print(mse)
+
+
+mse^0.5
+```
+
+## R-square
+
+```{r}
+SSE =sum((results$pred - results$real)^2)
+SST = sum( (mean(bikeshare$count)- results$real)^2)
+
+R2 = 1 - SSE/SST
+
+print(R2)
+```
+
 
 
