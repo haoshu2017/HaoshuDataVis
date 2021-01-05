@@ -1,0 +1,124 @@
+---
+title: "ML_Linear Regression Project"
+author: "Haoshu"
+date: "12/16/2020"
+output: html_document
+---
+
+##load the dataset 
+```{r setup, include=FALSE}
+library(readxl)
+bikeshare <- read_excel("bikeshare.xls")
+```
+
+
+# CHECK THE HEAD OF THE BIKESHARE DF
+```{r cars}
+head(bikeshare)
+```
+
+
+# THE TARGET VAR COUNT OF BIKE SHARE : 20TH -31TH OF EACH MONTH
+
+# CREATE A SCATTER PLOT OF COUNT VS TEMP
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+
+plot<-ggplot(data=bikeshare, aes(x = temp, y = count))
+plot + geom_point(aes(color= temp, alpha = 0.6))
+
+
+
+```
+
+# plot count vs. datetime 
+
+```{r}
+#convert datetime into POSIXct before plotting 
+bikeshare$DateTime<-as.POSIXct(paste(bikeshare$datetime, format="%Y%m%d %H%M%S"))
+class(bikeshare$DateTime)
+
+# new plot 
+plot2<-ggplot(data=bikeshare, aes(x = DateTime, y = count))
+plot2 + geom_point(aes(color= temp, alpha = 0.6)) + 
+                           scale_colour_gradient(high="pink", low="light green")
+```
+
+##CORRELATION BETWEEN TEMP AND COUNT 
+```{r}
+cor(bikeshare$temp, bikeshare$count, method = "pearson", use = "complete.obs")
+
+```
+
+
+
+## explore the season data, create a boxplot
+```{r}
+plot3<- ggplot(bikeshare, aes(factor(season), count))
+plot3 + geom_boxplot(aes(fill = factor(season)))
+
+
+```
+
+
+## create an hour col that takes hour from the datetime col 
+
+```{r}
+bikeshare$hour<- sapply(bikeshare$DateTime, function(x) {format(x, "%H")})
+
+head(bikeshare)
+
+```
+
+# count vs. hour
+```{r}
+#subsetting to workingday==1
+bike_w1<-bikeshare [ which(bikeshare$workingday == 1), ]
+
+
+plot4<-ggplot(data=bike_w1, aes(x = hour, y = count))
+
+plot4 + geom_point(aes(color= temp, alpha = 0.6), position =position_jitter(w=1, h=0)) + 
+                           scale_colour_gradient(high="orange", low="dark blue")
+
+```
+
+
+# ggplot for non-working days
+```{r}
+
+bike_wk<-bikeshare [ which(bikeshare$workingday == 0), ]
+plot5<-ggplot(data=bike_wk, aes(x = hour, y = count))
+
+plot5 + geom_point(aes(color= temp, alpha = 0.6), position =position_jitter(w=1, h=0)) + 
+                           scale_colour_gradient(high="dark blue", low="green")
+
+
+
+```
+
+## BUILD LINEAR REGRESSION MODEL
+```{r}
+# predict count based sorely on the temp feature 
+temp.model<-lm(formula = count ~ temp, data = bikeshare)
+
+summary(temp.model)
+
+temp.test <- data.frame(temp =c(25))
+predict(temp.model, temp.test)
+
+```
+
+##BUILD ANOTHER LINEAR REGRESSION MODEL
+```{R}
+bikeshare$hour<- sapply(bikeshare$hour, as.numeric)
+model1 <- lm(count ~ . -casual -registered -DateTime -atemp, bikeshare)
+summary(model1)
+
+
+
+```
+
+
